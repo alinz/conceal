@@ -138,7 +138,8 @@ func Encrypt(ptr interface{}, cipher Cipher) error {
 }
 
 // Decrypt decrypts given struct based on concceal's tag
-// it passes conceal's id tag to cipher
+// it passes conceal's id tag to cipher. If for any reason, decrypt encouter an error
+// for particular value, it will set the value to either empty string or empty bytes
 func Decrypt(ptr interface{}, cipher Cipher) error {
 	c := &conceal{
 		strFields:   make([]reflect.Value, 0),
@@ -158,7 +159,8 @@ func Decrypt(ptr interface{}, cipher Cipher) error {
 
 		decryptedAsBytes, err := cipher.Decrypt(encryptedAsBytes, c.id)
 		if err != nil {
-			return err
+			field.SetString("")
+			continue
 		}
 
 		field.SetString(string(decryptedAsBytes))
@@ -167,7 +169,8 @@ func Decrypt(ptr interface{}, cipher Cipher) error {
 	for _, field := range c.bytesFields {
 		decryptedAsBytes, err := cipher.Decrypt(field.Bytes(), c.id)
 		if err != nil {
-			return err
+			field.SetBytes([]byte{})
+			continue
 		}
 		field.SetBytes(decryptedAsBytes)
 	}
